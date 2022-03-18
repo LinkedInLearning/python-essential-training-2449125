@@ -313,7 +313,7 @@ scribe.forward(10)
 robotScribe = RobotScribe(color='yellow')
 robotScribe.drawSquare(20)
 
-canvas = CanvasAxis(40, 40, scribes=[scribe, robotScribe])
+canvas = CanvasAxis(30, 30, scribes=[scribe, robotScribe])
 
 canvas.toFile('solution_file')
 

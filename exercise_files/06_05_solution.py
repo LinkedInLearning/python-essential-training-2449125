@@ -98,7 +98,6 @@ class TerminalScribe:
         self.canvas.setPos(self.pos, self.trail)
         self.pos = pos
         self.canvas.setPos(self.pos, colored(self.mark, 'red'))
-        #print(self.pos)
         self.canvas.print()
         time.sleep(self.framerate)
 
@@ -109,23 +108,10 @@ def sine(x):
 def cosine(x):
     return 5*math.cos(x/4) + 10
 
-def circleTop(x):
-    radius = 10
-    center = 15
-    if x > center - radius and x < center + radius:
-        return center-math.sqrt(radius**2 - (x-center)**2)
-
-def circleBottom(x):
-    radius = 10
-    center = 15
-    if x > center - radius and x < center + radius:
-        return center+math.sqrt(radius**2 - (x-center)**2)
-
 
 canvas = Canvas(30, 30)
 scribe = TerminalScribe(canvas)
-#scribe.plotX(sine)
-#scribe.plotX(cosine)
-scribe.plotX(circleTop)
-scribe.plotX(circleBottom)
+scribe.plotX(sine)
+scribe.plotX(cosine)
+
 

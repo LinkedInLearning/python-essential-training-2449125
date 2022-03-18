@@ -224,28 +224,17 @@ def sine(x):
 def cosine(x):
     return 5*math.cos(x/4) + 15
 
-def circleTop(x):
-    radius = 10
-    center = 20
-    if x > center - radius and x < center + radius:
-        return center-math.sqrt(radius**2 - (x-center)**2)
-
-def circleBottom(x):
-    radius = 10
-    center = 20
-    if x > center - radius and x < center + radius:
-        return center+math.sqrt(radius**2 - (x-center)**2)
 
 scribe1 = TerminalScribe(color='green')
 scribe1.forward(100)
 scribe2 = RobotScribe(color='yellow')
 scribe2.drawSquare(20)
-scribe3 = PlotScribe(domain=[0, 40], color='cyan')
+scribe3 = PlotScribe(domain=[0, 30], color='cyan')
 scribe3.plotX(sine)
 scribe4 = RandomWalkScribe(color='red')
 scribe4.forward(100)
 scribe5 = RandomWalkScribe(color='blue')
 scribe5.forward(100)
-canvas = CanvasAxis(40, 40, scribes=[scribe1, scribe2, scribe3, scribe4, scribe5])
+canvas = CanvasAxis(30, 30, scribes=[scribe1, scribe2, scribe3, scribe4, scribe5])
 canvas.go()
 
