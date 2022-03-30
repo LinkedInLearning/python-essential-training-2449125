@@ -13,6 +13,3 @@ def listPrimes(max):
             foundPrimes.append(n)
     return foundPrimes
     
-
-if __name__ == '__main__':
-    print('This is a module! Please import it using: \nimport primes')
