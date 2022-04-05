@@ -27,7 +27,7 @@ class TerminalScribe:
         self.canvas = canvas
         self.trail = '.'
         self.mark = '*'
-        self.framerate = 0.05
+        self.framerate = 0.2
         self.pos = [0, 0]
 
     def up(self):
@@ -62,6 +62,15 @@ scribe = TerminalScribe(canvas)
 
 scribe.right()
 scribe.right()
+scribe.right()
 scribe.down()
 scribe.down()
+scribe.down()
+scribe.left()
+scribe.left()
+scribe.left()
+scribe.up()
+scribe.up()
+scribe.up()
+
 
