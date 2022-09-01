@@ -1,14 +1,15 @@
+
 import os
 import time
 from termcolor import colored
 
-# This is the Canvas class. It defines some height and width, and a 
+# This is the Canvas class. It defines some height and width, and a
 # matrix of characters to keep track of where the TerminalScribes are moving
 class Canvas:
     def __init__(self, width, height):
         self._x = width
         self._y = height
-        # This is a grid that contains data about where the 
+        # This is a grid that contains data about where the
         # TerminalScribes have visited
         self._canvas = [[' ' for y in range(self._y)] for x in range(self._x)]
 
@@ -37,6 +38,48 @@ class TerminalScribe:
         self.mark = '*'
         self.framerate = 0.2
         self.pos = [0, 0]
+
+    def drawsquare(self, size):
+        i = 0
+        while i < size:
+            self.right()
+            i = i + 1
+        i = 0
+        while i < 4:
+            self.down()
+            i = i + 1
+        i = 0
+        while i < size:
+            self.left()
+            i = i + 1
+        i = 0
+        while i < 4:
+            self.up()
+            i = i + 1
+
+
+
+    def drawrighttriangle2(self):
+        rows = int(input("Enter the number of rows: "))
+        for a in range(rows):
+            for b in range(a + 1):
+                print('*', end="")
+            print("\r")
+    def drawnumberedtriangle(self):
+        rows = int(input("Enter number of rows: "))
+
+        for i in range(rows):
+            for j in range(i + 2):
+                print(j + 2, end=" ")
+            print("\n")
+    def lefttriangle(self):
+        rows = int(input("Enter number of rows: "))
+
+        for i in range(rows):
+            for j in range(i + 2):
+                print(j + 2, end=" ")
+            print("\n")
+
 
     def up(self):
         pos = [self.pos[0], self.pos[1]-1]
@@ -70,24 +113,16 @@ class TerminalScribe:
         # Sleep for a little bit to create the animation
         time.sleep(self.framerate)
 
-# Create a new Canvas instance that is 30 units wide by 30 units tall 
+# Create a new Canvas instance that is 30 units wide by 30 units tall
 canvas = Canvas(30, 30)
 
 # Create a new scribe and give it the Canvas object
 scribe = TerminalScribe(canvas)
 
-# Draw a small square
-scribe.right()
-scribe.right()
-scribe.right()
-scribe.down()
-scribe.down()
-scribe.down()
-scribe.left()
-scribe.left()
-scribe.left()
-scribe.up()
-scribe.up()
-scribe.up()
+scribe.drawsquare(10)
+scribe.drawrighttriangle2()
+scribe.drawnumberedtriangle()
+
+
 
 
