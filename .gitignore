@@ -1,3 +1,19 @@
+# Env
+.*-env/
+.env
+
+# Jupyter stuff
+.ipynb_checkpoints/
+.ipython/
+.cache/
+
+# Random
+.vscode
+*.log
+desktop.ini
+message.txt
+snippets/
+output/
 .DS_Store
 node_modules
 .tmp

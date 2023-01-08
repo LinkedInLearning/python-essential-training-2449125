@@ -70,6 +70,11 @@ class TerminalScribe:
         # Sleep for a little bit to create the animation
         time.sleep(self.framerate)
 
+def draw_square(edge_len: int):
+    for func in [scribe.right, scribe.down, scribe.left, scribe.up]:
+        for _ in range(edge_len):
+            func()
+
 # Create a new Canvas instance that is 30 units wide by 30 units tall 
 canvas = Canvas(30, 30)
 
@@ -90,4 +95,4 @@ scribe.up()
 scribe.up()
 scribe.up()
 
-
+draw_square(10)
