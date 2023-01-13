@@ -4,9 +4,9 @@ import os
 import time
 from termcolor import colored
 
-# This is the Canvas class. It defines some height and width, and a 
-# matrix of characters to keep track of where the TerminalScribes are moving
 class Canvas:
+    """ A canvas has a width and height, and a grid that is initialised as empty locations,
+    and is used to track where where we are, and where we've been. """
     def __init__(self, width, height):
         self._x = width
         self._y = height
@@ -19,16 +19,16 @@ class Canvas:
 
     def set_pos(self, pos, mark):
         """ Set the (x, y) position to the provided character on the canvas. """
-        # grid markers can only be ints, but the pos can itself be a float
+        # grid locations can only be ints, but the pos can itself be a float
         self._grid[round(pos[0])][round(pos[1])] = mark
 
-    def clear(self):
+    def _clear(self):
         """ Clear the terminal (used to create animation) """
         os.system('cls' if os.name == 'nt' else 'clear')
 
     def render(self):
         """ Clear the terminal and then print each line in the canvas """
-        self.clear()
+        self._clear()
         for y in range(self._y):
             print(' '.join([row[y] for row in self._grid]))
 
@@ -36,12 +36,15 @@ class Canvas:
         return "\n".join(str("".join(row)) for row in self._grid)
 
 class Vector(Enum):
+    """ Vector Enum, where values are angles relative to x horizontal, and increase clockwise.
+    I.e. E is 0 and S is 90. """
     N = 270
     E = 0
     S = 90
     W = 180
 
 class TerminalAnimator:
+    """ Takes a canvas and updates the canvas with where we are, and where we've been. """
     TRAIL = '.'
     HEAD = '*'
 
@@ -51,21 +54,23 @@ class TerminalAnimator:
         self._pos = [0, 0]
         self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
 
-    def set_direction(self, angle: int):
+    def set_direction_angle(self, angle: int):
         """ 0 degrees is pointing right. Angle is clockwise. """
         self._vector_angle = angle
     
     def forward(self, steps=1):
         """ Move n steps in the current direction """
+        
+        # set vector using unit circle, i.e. hyp = 1
         vector = (round(cos(radians(self._vector_angle)), 2), round(sin(radians(self._vector_angle)), 2))
         for _ in range(steps):
             pos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
             if not self._canvas.hits_wall(pos):
                 self.draw(pos)
         
-    def move(self, direction: int):
-        """ Update current position, then draw """
-        self.set_direction(direction)
+    def _move(self, direction: int):
+        """ Update current direction, then draw """
+        self.set_direction_angle(direction)
         self.forward()
 
     def draw(self, pos):
@@ -80,7 +85,7 @@ class TerminalAnimator:
     def draw_square(self, edge_len: int):
         for direction in (Vector.E, Vector.S, Vector.W, Vector.N):
             for _ in range(edge_len):
-                self.move(direction.value)
+                self._move(direction.value)
 
 # Create a new Canvas instance that is 30 units wide by 30 units tall
 my_canvas = Canvas(30, 30)
@@ -90,13 +95,13 @@ scribe = TerminalAnimator(my_canvas)
 
 scribe.draw_square(10)
 
-scribe.set_direction(0)
+scribe.set_direction_angle(0)
 scribe.forward(35)
-scribe.set_direction(135)
+scribe.set_direction_angle(135)
 scribe.forward(25)
-scribe.set_direction(180)
+scribe.set_direction_angle(180)
 scribe.forward(10)
-scribe.set_direction(270)
+scribe.set_direction_angle(270)
 scribe.forward(15)
-scribe.set_direction(30)
+scribe.set_direction_angle(30)
 scribe.forward(30)
