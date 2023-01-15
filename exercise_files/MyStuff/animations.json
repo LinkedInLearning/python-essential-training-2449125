@@ -1,0 +1,24 @@
+{
+    "shape_1": {
+        "start": [0, 0],
+        "steps": [
+            ["angle", 0], ["forward", 35],
+            ["angle", 135], ["forward", 25],
+            ["angle", 180], ["forward", 10],
+            ["angle", 270], ["forward", 15],
+            ["angle", 30], ["forward", 30]
+        ]
+    }, 
+    "square_1": {
+        "start": [0, 0],
+        "steps": [
+            ["draw_square", 10]
+        ]
+    },
+    "square_2": {
+        "start": [5, 4],
+        "steps": [
+            ["draw_square", 6]
+        ]
+    }
+}

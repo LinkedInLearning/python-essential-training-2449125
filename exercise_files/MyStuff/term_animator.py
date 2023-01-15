@@ -1,4 +1,6 @@
+from collections import deque
 from enum import Enum
+import json
 from math import sin, cos, radians
 import os
 import time
@@ -44,30 +46,64 @@ class Vector(Enum):
     W = 180
 
 class TerminalAnimator:
-    """ Takes a canvas and updates the canvas with where we are, and where we've been. """
+    """ Takes a canvas and updates with where we are, and where we've been. """
     TRAIL = '.'
     HEAD = '*'
 
-    def __init__(self, canvas, framerate=20):
+    def __init__(self, canvas, name, start=(0,0), instructions=None, framerate=20):
+        """ Set canvas, framerate, initial position, and instructions.
+        Where an instruction repeats for n steps, expand this instruction
+        into multiple instructions. """
         self._canvas = canvas
+        self._name = name
+        self._pos = start
         self._framerate = framerate
-        self._pos = [0, 0]
+        
+        self._instructions = deque()
+        if instructions: # expand instructions so we can run individual steps in parallel
+            for cmd, value in instructions:
+                if cmd == "forward":
+                    for _ in range(value):  # turn any ("forward", n) into n * (forward, 1)
+                        self._instructions.append([cmd, 1])
+                else:
+                    self._instructions.append([cmd, value])
+
         self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
+
+    def execute_next_instruction(self):
+        """ Pop and process the next instruction.
+        If it's a direction change, perform it, and then do the next move instruction. """
+        if not self._instructions:
+            return False # signal we've finished
+
+        cmd, value = self._instructions.popleft()
+        while cmd == "angle": # process any angle instructions, until we get to move
+            self.set_direction_angle(value)
+            cmd, value = self._instructions.popleft()
+
+        if cmd == "forward":
+            for _ in range(value):
+                self.forward()
+        else:
+            getattr(self, cmd)(value)
+
+        return True
 
     def set_direction_angle(self, angle: int):
         """ 0 degrees is pointing right. Angle is clockwise. """
         self._vector_angle = angle
-    
+
     def forward(self, steps=1):
         """ Move n steps in the current direction """
-        
+
         # set vector using unit circle, i.e. hyp = 1
-        vector = (round(cos(radians(self._vector_angle)), 2), round(sin(radians(self._vector_angle)), 2))
+        vector = (round(cos(radians(self._vector_angle)), 2), 
+                  round(sin(radians(self._vector_angle)), 2))
         for _ in range(steps):
             pos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
             if not self._canvas.hits_wall(pos):
                 self.draw(pos)
-        
+
     def _move(self, direction: int):
         """ Update current direction, then draw """
         self.set_direction_angle(direction)
@@ -83,25 +119,26 @@ class TerminalAnimator:
         time.sleep(1/self._framerate)
 
     def draw_square(self, edge_len: int):
+        """ Expand the square instruction into a list of instructions """
+        self._instructions = deque()
         for direction in (Vector.E, Vector.S, Vector.W, Vector.N):
+            self._instructions.append(["angle", direction.value])
             for _ in range(edge_len):
-                self._move(direction.value)
+                self._instructions.append(["forward", 1])
 
-# Create a new Canvas instance that is 30 units wide by 30 units tall
+    def __repr__(self) -> str:
+        return f"TerminalAnimator({self._instructions}"
+
 my_canvas = Canvas(30, 30)
 
-# Create a new scribe and give it the Canvas object
-scribe = TerminalAnimator(my_canvas)
+with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
+    data = json.load(f) # animators in stored in external json
 
-scribe.draw_square(10)
+animators = [TerminalAnimator(my_canvas, name=shape_name,
+                                         start=attribs["start"], instructions=attribs["steps"])
+                    for shape_name, attribs in data.items()]
 
-scribe.set_direction_angle(0)
-scribe.forward(35)
-scribe.set_direction_angle(135)
-scribe.forward(25)
-scribe.set_direction_angle(180)
-scribe.forward(10)
-scribe.set_direction_angle(270)
-scribe.forward(15)
-scribe.set_direction_angle(30)
-scribe.forward(30)
+while True:
+    responses = [animator.execute_next_instruction() for animator in animators]
+    if not any(responses):
+        break # quit when no animators have any steps left
