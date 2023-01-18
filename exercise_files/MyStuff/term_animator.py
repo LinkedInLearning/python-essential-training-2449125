@@ -113,11 +113,11 @@ class TerminalAnimator:
 
                 new_angle = degrees(atan2(*vector))
                 if new_angle < 0:
-                    new_angle = 180 - new_angle
-                    
+                    new_angle = 360 - new_angle
+
                 self._vector_angle = new_angle
                 newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
-            
+
             self.draw(newpos)
 
     def _move(self, direction: int):
