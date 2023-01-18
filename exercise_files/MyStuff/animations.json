@@ -2,11 +2,11 @@
     "shape_1": {
         "start": [0, 0],
         "steps": [
-            ["angle", 0], ["forward", 35],
-            ["angle", 135], ["forward", 25],
-            ["angle", 180], ["forward", 10],
-            ["angle", 270], ["forward", 15],
-            ["angle", 30], ["forward", 30]
+            ["angle", 90], ["forward", 35],
+            ["angle", 225], ["forward", 25],
+            ["angle", 270], ["forward", 10],
+            ["angle", 0], ["forward", 15],
+            ["angle", 120], ["forward", 30]
         ]
     }, 
     "square_1": {

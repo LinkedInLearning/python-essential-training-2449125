@@ -1,7 +1,7 @@
 from collections import deque
 from enum import Enum
 import json
-from math import sin, cos, radians
+from math import sin, cos, atan2, radians, degrees
 import os
 import time
 from termcolor import colored
@@ -16,8 +16,13 @@ class Canvas:
 
     def hits_wall(self, point):
         """" Returns True if the given point is outside the boundaries of the Canvas """
-        return (round(point[0]) < 0 or round(point[0]) >= self._x 
-                or round(point[1]) < 0 or round(point[1]) >= self._y)
+        if round(point[0]) < 0 or round(point[0]) >= self._x:
+            return 'x'
+
+        if round(point[1]) < 0 or round(point[1]) >= self._y:
+            return 'y'
+
+        return None
 
     def set_pos(self, pos, mark):
         """ Set the (x, y) position to the provided character on the canvas. """
@@ -38,19 +43,19 @@ class Canvas:
         return "\n".join(str("".join(row)) for row in self._grid)
 
 class Vector(Enum):
-    """ Vector Enum, where values are angles relative to x horizontal, and increase clockwise.
+    """ Vector Enum, where values are angles relative to y vertical, and increase clockwise.
     I.e. E is 0 and S is 90. """
-    N = 270
-    E = 0
-    S = 90
-    W = 180
+    N = 0
+    E = 90
+    S = 180
+    W = 270
 
 class TerminalAnimator:
     """ Takes a canvas and updates with where we are, and where we've been. """
     TRAIL = '.'
     HEAD = '*'
 
-    def __init__(self, canvas, name, start=(0,0), instructions=None, framerate=20):
+    def __init__(self, canvas, name, start=(0,0), instructions=None, framerate=30):
         """ Set canvas, framerate, initial position, and instructions.
         Where an instruction repeats for n steps, expand this instruction
         into multiple instructions. """
@@ -58,7 +63,8 @@ class TerminalAnimator:
         self._name = name
         self._pos = start
         self._framerate = framerate
-        
+        self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
+
         self._instructions = deque()
         if instructions: # expand instructions so we can run individual steps in parallel
             for cmd, value in instructions:
@@ -67,8 +73,6 @@ class TerminalAnimator:
                         self._instructions.append([cmd, 1])
                 else:
                     self._instructions.append([cmd, value])
-
-        self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
 
     def execute_next_instruction(self):
         """ Pop and process the next instruction.
@@ -97,12 +101,24 @@ class TerminalAnimator:
         """ Move n steps in the current direction """
 
         # set vector using unit circle, i.e. hyp = 1
-        vector = (round(cos(radians(self._vector_angle)), 2), 
-                  round(sin(radians(self._vector_angle)), 2))
+        vector = (round(sin(radians(self._vector_angle)), 2),
+                  round(-cos(radians(self._vector_angle)), 2))
         for _ in range(steps):
-            pos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
-            if not self._canvas.hits_wall(pos):
-                self.draw(pos)
+            newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
+            if wall := self._canvas.hits_wall(newpos): # if we bounce off a wall
+                if wall == 'x':
+                    vector = -vector[0], vector[1]
+                if wall == 'y':
+                    vector = vector[0], -vector[1]
+
+                new_angle = degrees(atan2(*vector))
+                if new_angle < 0:
+                    new_angle = 180 - new_angle
+                    
+                self._vector_angle = new_angle
+                newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
+            
+            self.draw(newpos)
 
     def _move(self, direction: int):
         """ Update current direction, then draw """
@@ -129,16 +145,25 @@ class TerminalAnimator:
     def __repr__(self) -> str:
         return f"TerminalAnimator({self._instructions}"
 
-my_canvas = Canvas(30, 30)
+def main():     
+    my_canvas = Canvas(30, 30)
 
-with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
-    data = json.load(f) # animators in stored in external json
+    # with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
+    #     data = json.load(f) # animators in stored in external json
 
-animators = [TerminalAnimator(my_canvas, name=shape_name,
-                                         start=attribs["start"], instructions=attribs["steps"])
-                    for shape_name, attribs in data.items()]
+    # animators = [TerminalAnimator(my_canvas, name=shape_name,
+    #                                         start=attribs["start"], instructions=attribs["steps"])
+    #                     for shape_name, attribs in data.items()]
 
-while True:
-    responses = [animator.execute_next_instruction() for animator in animators]
-    if not any(responses):
-        break # quit when no animators have any steps left
+    # while True:
+    #     responses = [animator.execute_next_instruction() for animator in animators]
+    #     if not any(responses):
+    #         break # quit when no animators have any steps left
+    
+    animator = TerminalAnimator(my_canvas, "manual")
+    animator.set_direction_angle(135)
+    for _ in range(50):
+        animator.forward()
+
+if __name__ == "__main__":
+    main()
