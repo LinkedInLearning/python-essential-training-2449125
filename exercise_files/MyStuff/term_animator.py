@@ -16,13 +16,14 @@ class Canvas:
 
     def hits_wall(self, point):
         """" Returns True if the given point is outside the boundaries of the Canvas """
+        x_flip = y_flip = 1
         if round(point[0]) < 0 or round(point[0]) >= self._x:
-            return 'x'
+            x_flip = -1
 
         if round(point[1]) < 0 or round(point[1]) >= self._y:
-            return 'y'
+            y_flip = -1
 
-        return None
+        return x_flip, y_flip
 
     def set_pos(self, pos, mark):
         """ Set the (x, y) position to the provided character on the canvas. """
@@ -105,18 +106,14 @@ class TerminalAnimator:
                   round(-cos(radians(self._vector_angle)), 2))
         for _ in range(steps):
             newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
-            if wall := self._canvas.hits_wall(newpos): # if we bounce off a wall
-                if wall == 'x':
-                    vector = -vector[0], vector[1]
-                if wall == 'y':
-                    vector = vector[0], -vector[1]
+            x_flip, y_flip = self._canvas.hits_wall(newpos) # if we bounce off a wall
+            vector = x_flip*vector[0], y_flip*vector[1]
+            new_angle = degrees(atan2(vector[0], -vector[1])) # because y vector increments down
+            if new_angle < 0:
+                new_angle = 180 - new_angle
 
-                new_angle = degrees(atan2(*vector))
-                if new_angle < 0:
-                    new_angle = 360 - new_angle
-
-                self._vector_angle = new_angle
-                newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
+            self._vector_angle = new_angle
+            newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
 
             self.draw(newpos)
 
@@ -148,17 +145,17 @@ class TerminalAnimator:
 def main():     
     my_canvas = Canvas(30, 30)
 
-    # with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
-    #     data = json.load(f) # animators in stored in external json
+    with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
+        data = json.load(f) # animators in stored in external json
 
-    # animators = [TerminalAnimator(my_canvas, name=shape_name,
-    #                                         start=attribs["start"], instructions=attribs["steps"])
-    #                     for shape_name, attribs in data.items()]
+    animators = [TerminalAnimator(my_canvas, name=shape_name,
+                                            start=attribs["start"], instructions=attribs["steps"])
+                        for shape_name, attribs in data.items()]
 
-    # while True:
-    #     responses = [animator.execute_next_instruction() for animator in animators]
-    #     if not any(responses):
-    #         break # quit when no animators have any steps left
+    while True:
+        responses = [animator.execute_next_instruction() for animator in animators]
+        if not any(responses):
+            break # quit when no animators have any steps left
     
     animator = TerminalAnimator(my_canvas, "manual")
     animator.set_direction_angle(135)
