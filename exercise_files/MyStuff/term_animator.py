@@ -56,14 +56,13 @@ class TerminalAnimator:
     TRAIL = '.'
     HEAD = '*'
 
-    def __init__(self, canvas, name, start=(0,0), instructions=None, framerate=30):
+    def __init__(self, canvas, name, start=(0,0), instructions=None):
         """ Set canvas, framerate, initial position, and instructions.
         Where an instruction repeats for n steps, expand this instruction
         into multiple instructions. """
         self._canvas = canvas
         self._name = name
         self._pos = start
-        self._framerate = framerate
         self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
 
         self._instructions = deque()
@@ -110,26 +109,23 @@ class TerminalAnimator:
             vector = x_flip*vector[0], y_flip*vector[1]
             new_angle = degrees(atan2(vector[0], -vector[1])) # because y vector increments down
             if new_angle < 0:
-                new_angle = 180 - new_angle
+                new_angle = 360 + new_angle
 
             self._vector_angle = new_angle
             newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
 
-            self.draw(newpos)
+            self.update_posn(newpos)
 
     def _move(self, direction: int):
         """ Update current direction, then draw """
         self.set_direction_angle(direction)
         self.forward()
 
-    def draw(self, pos):
+    def update_posn(self, pos):
         """ Updates the canvas, then renders the canvas """
         self._canvas.set_pos(self._pos, colored(TerminalAnimator.TRAIL, 'green')) # old posn
         self._pos = pos # Update position
         self._canvas.set_pos(self._pos, colored(TerminalAnimator.HEAD, 'red'))
-
-        self._canvas.render()
-        time.sleep(1/self._framerate)
 
     def draw_square(self, edge_len: int):
         """ Expand the square instruction into a list of instructions """
@@ -142,8 +138,9 @@ class TerminalAnimator:
     def __repr__(self) -> str:
         return f"TerminalAnimator({self._instructions}"
 
-def main():     
-    my_canvas = Canvas(30, 30)
+def main():
+    framerate=30
+    my_canvas = Canvas(25, 25)
 
     with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
         data = json.load(f) # animators in stored in external json
@@ -154,13 +151,10 @@ def main():
 
     while True:
         responses = [animator.execute_next_instruction() for animator in animators]
+        my_canvas.render()
+        time.sleep(1/framerate)
         if not any(responses):
             break # quit when no animators have any steps left
-    
-    animator = TerminalAnimator(my_canvas, "manual")
-    animator.set_direction_angle(135)
-    for _ in range(50):
-        animator.forward()
 
 if __name__ == "__main__":
     main()
