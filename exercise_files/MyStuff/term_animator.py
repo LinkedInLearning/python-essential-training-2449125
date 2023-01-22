@@ -13,9 +13,15 @@ class Canvas:
         self._x = width
         self._y = height
         self._grid = [[' ' for x in range(self._x)] for y in range(self._y)]
+        self._trails = []
 
-    def hits_wall(self, point):
-        """" Returns True if the given point is outside the boundaries of the Canvas """
+    def add_trail(self, trail):
+        """ Used to add a Trail to the list of trails associated with this canvas. 
+        Typically called by the Trail to register itself. """
+        self._trails.append(trail)
+
+    def hits_wall(self, point) -> tuple[int, int]:
+        """" If we reach a wall, we return -1 for that axis. Otherwise, return 1 for that axis. """
         x_flip = y_flip = 1
         if round(point[0]) < 0 or round(point[0]) >= self._x:
             x_flip = -1
@@ -34,7 +40,16 @@ class Canvas:
         """ Clear the terminal (used to create animation) """
         os.system('cls' if os.name == 'nt' else 'clear')
 
-    def render(self):
+    def animate(self, framerate: int):
+        """ Draws all trails in parallel. """
+        while True:
+            responses = [trail.execute_next_instruction() for trail in self._trails]
+            self._render()
+            time.sleep(1/framerate)
+            if not any(responses):
+                break # quit when no animators have any steps left
+
+    def _render(self):
         """ Clear the terminal and then print each line in the canvas """
         self._clear()
         for y in range(self._y):
@@ -51,16 +66,21 @@ class Vector(Enum):
     S = 180
     W = 270
 
-class TerminalAnimator:
-    """ Takes a canvas and updates with where we are, and where we've been. """
+class TerminalTrail:
+    """ A moving head that leaves a trail. It follows instructions, #
+    which can be an angle, or a move forward in the current direction.
+    The TerminalTrail must register itself with a canvas, which is able to draw the trail. """
+
     TRAIL = '.'
     HEAD = '*'
 
-    def __init__(self, canvas, name, start=(0,0), instructions=None):
+    def __init__(self, canvas: Canvas, name, start=(0,0), instructions=None):
         """ Set canvas, framerate, initial position, and instructions.
         Where an instruction repeats for n steps, expand this instruction
         into multiple instructions. """
         self._canvas = canvas
+        self._canvas.add_trail(self) # register this trail with the canvas
+
         self._name = name
         self._pos = start
         self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
@@ -123,9 +143,9 @@ class TerminalAnimator:
 
     def update_posn(self, pos):
         """ Updates the canvas, then renders the canvas """
-        self._canvas.set_pos(self._pos, colored(TerminalAnimator.TRAIL, 'green')) # old posn
+        self._canvas.set_pos(self._pos, colored(TerminalTrail.TRAIL, 'green')) # old posn
         self._pos = pos # Update position
-        self._canvas.set_pos(self._pos, colored(TerminalAnimator.HEAD, 'red'))
+        self._canvas.set_pos(self._pos, colored(TerminalTrail.HEAD, 'red'))
 
     def draw_square(self, edge_len: int):
         """ Expand the square instruction into a list of instructions """
@@ -136,25 +156,19 @@ class TerminalAnimator:
                 self._instructions.append(["forward", 1])
 
     def __repr__(self) -> str:
-        return f"TerminalAnimator({self._instructions}"
+        return f"{self.__class__.__name__}({self._instructions}"
 
 def main():
-    framerate=30
     my_canvas = Canvas(25, 25)
 
     with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
         data = json.load(f) # animators in stored in external json
 
-    animators = [TerminalAnimator(my_canvas, name=shape_name,
-                                            start=attribs["start"], instructions=attribs["steps"])
-                        for shape_name, attribs in data.items()]
+    for shape_name, attribs in data.items():
+        TerminalTrail(my_canvas, name=shape_name,
+                      start=attribs["start"], instructions=attribs["steps"])
 
-    while True:
-        responses = [animator.execute_next_instruction() for animator in animators]
-        my_canvas.render()
-        time.sleep(1/framerate)
-        if not any(responses):
-            break # quit when no animators have any steps left
+    my_canvas.animate(20)
 
 if __name__ == "__main__":
     main()

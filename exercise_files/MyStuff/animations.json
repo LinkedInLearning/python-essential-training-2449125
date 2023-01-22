@@ -12,7 +12,7 @@
     "bouncy_line": {
         "start": [0, 0],
         "steps": [
-            ["angle", 110], ["forward", 100]
+            ["angle", 110], ["forward", 150]
         ]
     }, 
     "square_1": {
