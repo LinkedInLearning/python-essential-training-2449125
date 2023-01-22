@@ -1,3 +1,4 @@
+""" Animates multiple trails on the screen. Trail attributes can be externalised as a json file. """
 from collections import deque
 from enum import Enum
 import json
@@ -5,6 +6,8 @@ from math import sin, cos, atan2, radians, degrees
 import os
 import time
 from termcolor import colored
+
+FRAMERATE = 20
 
 class Canvas:
     """ A canvas has a width and height, and a grid that is initialised as empty locations,
@@ -74,7 +77,7 @@ class TerminalTrail:
     TRAIL = '.'
     HEAD = '*'
 
-    def __init__(self, canvas: Canvas, name, start=(0,0), instructions=None):
+    def __init__(self, canvas: Canvas, name, start=(0,0), instructions=None, trail_colour="green"):
         """ Set canvas, framerate, initial position, and instructions.
         Where an instruction repeats for n steps, expand this instruction
         into multiple instructions. """
@@ -82,6 +85,7 @@ class TerminalTrail:
         self._canvas.add_trail(self) # register this trail with the canvas
 
         self._name = name
+        self._trail_colour = trail_colour
         self._pos = start
         self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
 
@@ -143,7 +147,7 @@ class TerminalTrail:
 
     def update_posn(self, pos):
         """ Updates the canvas, then renders the canvas """
-        self._canvas.set_pos(self._pos, colored(TerminalTrail.TRAIL, 'green')) # old posn
+        self._canvas.set_pos(self._pos, colored(TerminalTrail.TRAIL, self._trail_colour)) # old posn
         self._pos = pos # Update position
         self._canvas.set_pos(self._pos, colored(TerminalTrail.HEAD, 'red'))
 
@@ -166,9 +170,9 @@ def main():
 
     for shape_name, attribs in data.items():
         TerminalTrail(my_canvas, name=shape_name,
-                      start=attribs["start"], instructions=attribs["steps"])
+                      start=attribs["start"], instructions=attribs["steps"], trail_colour=attribs["colour"])
 
-    my_canvas.animate(20)
+    my_canvas.animate(FRAMERATE)
 
 if __name__ == "__main__":
     main()

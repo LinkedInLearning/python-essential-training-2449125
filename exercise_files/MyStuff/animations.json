@@ -1,5 +1,6 @@
 {
     "shape_1": {
+        "colour": "green",
         "start": [0, 0],
         "steps": [
             ["angle", 90], ["forward", 35],
@@ -10,19 +11,22 @@
         ]
     }, 
     "bouncy_line": {
+        "colour": "yellow",        
         "start": [0, 0],
         "steps": [
             ["angle", 110], ["forward", 150]
         ]
     }, 
     "square_1": {
-        "start": [0, 0],
+        "colour": "blue",        
+        "start": [2, 2],
         "steps": [
             ["draw_square", 10]
         ]
     },
     "square_2": {
-        "start": [5, 4],
+        "colour": "magenta",
+        "start": [15, 4],
         "steps": [
             ["draw_square", 6]
         ]
