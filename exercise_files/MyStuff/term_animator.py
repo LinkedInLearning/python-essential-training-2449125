@@ -125,27 +125,38 @@ class TerminalTrail:
         """ Move n steps in the current direction """
 
         # set vector using unit circle, i.e. hyp = 1
-        vector = (round(sin(radians(self._vector_angle)), 2),
-                  round(-cos(radians(self._vector_angle)), 2))
+        vector = TerminalTrail.get_vector_from_angle(self._vector_angle)
         for _ in range(steps):
             newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
             x_flip, y_flip = self._canvas.hits_wall(newpos) # if we bounce off a wall
             vector = x_flip*vector[0], y_flip*vector[1]
-            new_angle = degrees(atan2(vector[0], -vector[1])) # because y vector increments down
+            new_angle = TerminalTrail.get_angle_for_vector(vector) # because y vector increments down
             if new_angle < 0:
                 new_angle = 360 + new_angle
 
             self._vector_angle = new_angle
             newpos = [self._pos[0]+vector[0], self._pos[1]+vector[1]]
 
-            self.update_posn(newpos)
+            self._update_posn(newpos)
+
+    @staticmethod
+    def get_vector_from_angle(angle_in_degrees):
+        """ Return the unit (x,y) vector for a given angle """
+        vector = (round(sin(radians(angle_in_degrees)), 2),
+                  round(-cos(radians(angle_in_degrees)), 2))
+                  
+        return vector
+    
+    @staticmethod
+    def get_angle_for_vector(vector: tuple):
+        return degrees(atan2(vector[0], -vector[1]))
 
     def _move(self, direction: int):
         """ Update current direction, then draw """
         self.set_direction_angle(direction)
         self.forward()
 
-    def update_posn(self, pos):
+    def _update_posn(self, pos):
         """ Updates the canvas, then renders the canvas """
         self._canvas.set_pos(self._pos, colored(TerminalTrail.TRAIL, self._trail_colour)) # old posn
         self._pos = pos # Update position
