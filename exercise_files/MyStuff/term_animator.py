@@ -4,10 +4,18 @@ from enum import Enum
 import json
 from math import sin, cos, atan2, radians, degrees
 import os
+from pathlib import Path
+import sys
 import time
-from termcolor import colored
+import traceback
+from termcolor import colored, COLORS
 
 FRAMERATE = 20
+SCRIPT_DIR = Path(__file__).parent
+
+class InvalidTrail(Exception):
+    def __init__(self, trail_name, *args: object) -> None:
+        super().__init__(f"{trail_name}:", *args)
 
 class Canvas:
     """ A canvas has a width and height, and a grid that is initialised as empty locations,
@@ -23,14 +31,22 @@ class Canvas:
         Typically called by the Trail to register itself. """
         self._trails.append(trail)
 
+    def x_out_of_bounds(self, point):
+        if round(point[0]) < 0 or round(point[0]) >= self._x:
+            return True
+
+        return False
+    
+    def y_out_of_bounds(self, point):
+        if round(point[1]) < 0 or round(point[1]) >= self._y:
+            return True
+
+        return False
+        
     def hits_wall(self, point) -> tuple[int, int]:
         """" If we reach a wall, we return -1 for that axis. Otherwise, return 1 for that axis. """
-        x_flip = y_flip = 1
-        if round(point[0]) < 0 or round(point[0]) >= self._x:
-            x_flip = -1
-
-        if round(point[1]) < 0 or round(point[1]) >= self._y:
-            y_flip = -1
+        x_flip = -1 if self.x_out_of_bounds(point) else 1
+        y_flip = -1 if self.y_out_of_bounds(point) else 1
 
         return x_flip, y_flip
 
@@ -60,6 +76,9 @@ class Canvas:
 
     def __str__(self) -> str:
         return "\n".join(str("".join(row)) for row in self._grid)
+    
+    def __repr__(self) -> str:
+        return f"Canvas(x={self._x},y={self._y})"
 
 class Vector(Enum):
     """ Vector Enum, where values are angles relative to y vertical, and increase clockwise.
@@ -82,21 +101,39 @@ class TerminalTrail:
         Where an instruction repeats for n steps, expand this instruction
         into multiple instructions. """
         self._canvas = canvas
-        self._canvas.add_trail(self) # register this trail with the canvas
-
         self._name = name
         self._trail_colour = trail_colour
+        if trail_colour not in COLORS:
+            raise InvalidTrail(name, f"Invalid colour: {trail_colour}")
+        
         self._pos = start
+        if self._canvas.x_out_of_bounds(start) or self._canvas.y_out_of_bounds(start):
+            raise InvalidTrail(name, f"Invalid start {start} for canvas {repr(canvas)}")
+        
         self._vector_angle = Vector.E.value  # arbitrary initial vector as degrees
 
         self._instructions = deque()
         if instructions: # expand instructions so we can run individual steps in parallel
             for cmd, value in instructions:
+                try:
+                    value = int(value)
+                except ValueError as e:
+                    raise InvalidTrail(name, f"Bad instruction {cmd, value}") from e
+                
                 if cmd == "forward":
                     for _ in range(value):  # turn any ("forward", n) into n * (forward, 1)
                         self._instructions.append([cmd, 1])
-                else:
+                elif cmd == "angle":
                     self._instructions.append([cmd, value])
+                else: # assume that the instruction maps to a function name
+                    try:
+                        getattr(self, cmd)
+                    except AttributeError as e:
+                        raise InvalidTrail(name, f"Bad instruction {cmd, value}") from e  
+                                           
+                    self._instructions.append([cmd, value])
+        
+        self._canvas.add_trail(self) # register this trail with the canvas
 
     def execute_next_instruction(self):
         """ Pop and process the next instruction.
@@ -173,17 +210,22 @@ class TerminalTrail:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self._instructions}"
 
-def main():
+def main(out = sys.stderr):
     my_canvas = Canvas(25, 25)
 
-    with open("exercise_files/MyStuff/animations.json", "r", encoding="utf8") as f:
+    with open(Path(SCRIPT_DIR, "animations.json"), "r", encoding="utf8") as f:
         data = json.load(f) # animators in stored in external json
 
     for shape_name, attribs in data.items():
-        TerminalTrail(my_canvas, name=shape_name,
+        try:
+            TerminalTrail(my_canvas, name=shape_name,
                       start=attribs["start"], instructions=attribs["steps"], trail_colour=attribs["colour"])
-
+        except InvalidTrail as err:
+            print(f"\n***\nInvalidTrail exception caught:\n{repr(err)}\n***", file=out)
+            traceback.print_exc(file=out)
+            
     my_canvas.animate(FRAMERATE)
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    with open(Path(SCRIPT_DIR, 'term_animator.err'), 'w') as err_f:
+        main(err_f)

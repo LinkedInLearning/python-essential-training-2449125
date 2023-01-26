@@ -18,3 +18,5 @@ output/
 node_modules
 .tmp
 npm-debug.log
+*.out
+*.err
