@@ -1,5 +1,5 @@
 """ Animates multiple trails on the screen. Trail attributes can be externalised as a json file. """
-from collections import deque
+from collections import defaultdict, deque
 from enum import Enum
 import json
 from math import sin, cos, atan2, radians, degrees
@@ -8,12 +8,17 @@ from pathlib import Path
 import sys
 import time
 import traceback
+from threading import Thread
 from termcolor import colored, COLORS
 
-FRAMERATE = 20
+FRAMERATE = 30
+CANVAS_WIDTH = 25
+CANVAS_HEIGHT = 25
+
 SCRIPT_DIR = Path(__file__).parent
 
 class InvalidTrail(Exception):
+    """ Handle various invalid trail parameters """
     def __init__(self, trail_name, *args: object) -> None:
         super().__init__(f"{trail_name}:", *args)
 
@@ -62,10 +67,16 @@ class Canvas:
     def animate(self, framerate: int):
         """ Draws all trails in parallel. """
         while True:
-            responses = [trail.execute_next_instruction() for trail in self._trails]
+            # run each instruction in its own thread
+            responses = defaultdict(bool) # store whether instructions are remaining for a given trail
+            threads = [Thread(target=trail.execute_next_instruction, args=(responses, )) for trail in self._trails]
+            # responses = [trail.execute_next_instruction() for trail in self._trails]
+            _ = [t.start() for t in threads] 
+            _ = [t.join() for t in threads]
+            
             self._render()
             time.sleep(1/framerate)
-            if not any(responses):
+            if not any(responses.values()):
                 break # quit when no animators have any steps left
 
     def _render(self):
@@ -135,11 +146,14 @@ class TerminalTrail:
         
         self._canvas.add_trail(self) # register this trail with the canvas
 
-    def execute_next_instruction(self):
+    def execute_next_instruction(self, responses: defaultdict):
         """ Pop and process the next instruction.
-        If it's a direction change, perform it, and then do the next move instruction. """
+        If it's a direction change, perform it, and then do the next move instruction.
+        Pass in a dict to store whether this trail has any more instructions. 
+        We need this to access the results from Threads. """
+        responses[self._name] = False # set this thread as finished
         if not self._instructions:
-            return False # signal we've finished
+            return responses[self._name] # signal we've finished
 
         cmd, value = self._instructions.popleft()
         while cmd == "angle": # process any angle instructions, until we get to move
@@ -152,7 +166,8 @@ class TerminalTrail:
         else:
             getattr(self, cmd)(value)
 
-        return True
+        responses[self._name] = True
+        return responses[self._name]
 
     def set_direction_angle(self, angle: int):
         """ 0 degrees is pointing right. Angle is clockwise. """
@@ -211,7 +226,7 @@ class TerminalTrail:
         return f"{self.__class__.__name__}({self._instructions}"
 
 def main(out = sys.stderr):
-    my_canvas = Canvas(25, 25)
+    my_canvas = Canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
 
     with open(Path(SCRIPT_DIR, "animations.json"), "r", encoding="utf8") as f:
         data = json.load(f) # animators in stored in external json
