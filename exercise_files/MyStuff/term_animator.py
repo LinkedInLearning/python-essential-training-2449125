@@ -238,6 +238,7 @@ def main(out = sys.stderr):
         except InvalidTrail as err:
             print(f"\n***\nInvalidTrail exception caught:\n{repr(err)}\n***", file=out)
             traceback.print_exc(file=out)
+            out.flush()
             
     my_canvas.animate(FRAMERATE)
 
