@@ -229,7 +229,13 @@ def main(out = sys.stderr):
     my_canvas = Canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
 
     with open(Path(SCRIPT_DIR, "animations.json"), "r", encoding="utf8") as f:
-        data = json.load(f) # animators in stored in external json
+        try:
+            data = json.load(f) # animators in stored in external json
+        except json.JSONDecodeError as e:
+            msg = f"Error parsing input file {f.name}:\n{e}"
+            print(msg)
+            print(msg, file=out)            
+            return 
 
     for shape_name, attribs in data.items():
         try:
