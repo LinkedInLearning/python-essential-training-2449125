@@ -1,0 +1,64 @@
+{
+    "shape_1": {
+        "colour": "green",
+        "start": [0, 0],
+        "steps": [
+            ["angle", 90], ["forward", 35],
+            ["angle", 225], ["forward", 25],
+            ["angle", 270], ["forward", 10],
+            ["angle", 0], ["forward", 15],
+            ["angle", 120], ["forward", 30]
+        ]
+    }, 
+    "bouncy_line": {
+        "colour": "yellow",        
+        "start": [0, 0],
+        "steps": [
+            ["angle", 110], ["forward", 15]
+        ]
+    }, 
+    "square_1": {
+        "colour": "blue",        
+        "start": [2, 2],
+        "steps": [
+            ["draw_square", 10]
+        ]
+    },
+    "square_2": {
+        "colour": "magenta",
+        "start": [15, 4],
+        "steps": [
+            ["draw_square", 6]
+        ]
+    },
+    "bad_start": {
+        "colour": "yellow",        
+        "start": [1000, 0],
+        "steps": [
+            ["angle", 110], ["forward", 150]
+        ]
+    },
+    "bad_colour": {
+        "colour": "flam",        
+        "start": [10, 10],
+        "steps": [
+            ["angle", 110], ["forward", 150]
+        ]
+    },
+    "bad_instruction": {
+        "colour": "red",        
+        "start": [10, 10],
+        "steps": [
+            ["angle", 90], ["forward", 35],
+            ["woopsie", 225], ["forward", 25]
+        ]
+    },
+    "bad_instruction_val": {
+        "colour": "red",        
+        "start": [10, 10],
+        "steps": [
+            ["angle", 90], ["forward", 35],
+            ["angle", "fifty"], ["forward", 25]
+        ]
+    }
+}
